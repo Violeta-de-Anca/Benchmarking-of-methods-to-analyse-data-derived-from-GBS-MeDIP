@@ -74,4 +74,4 @@ This project was funded by the European Union (Grant Agreement No 101000236) and
 
 ## Acknowledgements
 
-We acknowledge support from the National Academic Infrastructure for Supercomputing in Sweden (NAISS), the John Templeton Foundation, the European Union, Svenska Forskningsrådet, and the GEroNIMO project workshop attendees.
+We acknowledge support from the National Academic Infrastructure for Supercomputing in Sweden (NAISS), the John Templeton Foundation, the European Union, Svenska Forskningsrådet, and the help from all the attendants from the workshop on GBS-MeDIP data analysis in relation to the GEroNIMO project, especially Sonia Eynard and Gwendal Restoux.
