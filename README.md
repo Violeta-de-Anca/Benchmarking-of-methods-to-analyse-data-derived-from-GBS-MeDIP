@@ -10,7 +10,7 @@ GBS-MeDIP is a cost-effective method developed to investigate DNA methylation. D
 
 #### 1. Count Matrix Generation
 
--  `create_saf_files.py` Script for merging genomic coordinates and generating SAF files used in subsequent counting steps.
+-  `` Script for merging genomic coordinates and generating SAF files used in subsequent counting steps.
 
 -  `feature_counts.sh` Shell script utilizing featureCounts software to generate accurate count matrices from BAM files.
 
@@ -56,17 +56,17 @@ Violeta de Anca Prado, et al. "Benchmarking of methods to analyze data derived f
 
 ## Authors
 
-[Violeta de Anca Prado](https://orcid.org/0000-0003-1845-509X)
+-  [Violeta de Anca Prado](https://orcid.org/0000-0003-1845-509X)
 
-[Fábio Pértille]()
+-  [Fábio Pértille]()
 
-[Pedro Sá](https://orcid.org/0000-0002-1588-6778)
+-  [Pedro Sá](https://orcid.org/0000-0002-1588-6778)
 
-[Marta Gòdia](https://orcid.org/0000-0002-0439-4014)
+-  [Marta Gòdia](https://orcid.org/0000-0002-0439-4014)
 
-[Joëlle Rüegg](https://orcid.org/0000-0002-6580-9201)
+-  [Joëlle Rüegg](https://orcid.org/0000-0002-6580-9201)
 
-[Carlos Guerrero Bosagna (Corresponding author)](https://orcid.org/0000-0003-1935-5875)
+-  [Carlos Guerrero Bosagna (Corresponding author)](https://orcid.org/0000-0003-1935-5875)
 
 ## Funding
 
