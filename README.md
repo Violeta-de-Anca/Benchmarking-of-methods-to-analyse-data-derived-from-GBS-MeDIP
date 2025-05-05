@@ -58,7 +58,7 @@ Violeta de Anca Prado, et al. "Benchmarking of methods to analyze data derived f
 
 -  [Violeta de Anca Prado](https://orcid.org/0000-0003-1845-509X)
 
--  [Fábio Pértille]()
+-  [Fábio Pértille](https://orcid.org/0000-0002-7214-9184)
 
 -  [Pedro Sá](https://orcid.org/0000-0002-1588-6778)
 
