@@ -13,4 +13,4 @@
 module load bioinfo-tools
 module load R_packages/4.2.1
 
-R --no-save --quiet < 02.RangeCalling_chicken1.R
+R --no-save --quiet < RangeCalling_chicken.R
