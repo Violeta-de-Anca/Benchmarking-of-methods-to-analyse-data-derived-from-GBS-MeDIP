@@ -16,15 +16,13 @@ GBS-MeDIP is a cost-effective method developed to investigate DNA methylation. D
 
 #### 2. Distribution Analysis
 
--  `distribution_fitting.R` R script to evaluate the statistical distribution (normal, poisson, negative-binomial) fitting the GBS-MeDIP count data. Calculates and visualizes Akaike Information Criterion (AIC) values.
+-  `Distribution_analysis` Folder containing an R script to evaluate the statistical distribution (normal, poisson, negative-binomial) fitting the GBS-MeDIP count data. Calculates and visualizes Akaike Information Criterion (AIC) values for the different tested distributions.
 
 #### 3. Statistical Method Benchmarking
 
--  `pvalue_uniformity_test.R` Evaluates the uniformity of p-value distributions to detect biases in various statistical methods.
+-  `Null_distribution` Folder containing scripts that evaluates the uniformity of p-value distributions to detect biases in the various statistical methods described in this article. In those scripts the reader will find for each of the evaluated method code to compute the False Positive Rate (FPR).
 
--  `false_positive_rate.R` Computes the False Positive Rate (FPR) for statistical methods such as Mann-Whitney, EdgeR (maximum and quasi-likelihood), and Limma.
-
--  `simulation_true_positive_rate.R` Simulates data to compute True Positive Rates (TPR) and generates Receiver Operating Characteristic (ROC) curves to compare the accuracy of different methods.
+-  `Simulation` Folder containing script which simulates GBS-MeDIP data to compute True Positive Rates (TPR) and generates Receiver Operating Characteristic (ROC) curves to compare the accuracy of different methods.
 
 ## Recommended Pipeline
 
