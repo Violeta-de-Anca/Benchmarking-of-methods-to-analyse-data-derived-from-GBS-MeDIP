@@ -7,6 +7,8 @@ library(factoextra)
 library(FactoMineR)
 library(ade4)
 library(gridExtra)
+library("DESeq2")
+library("DEGreport")
 setwd("/proj/naiss2024-23-57/GBS_MeDIP_benchmark/bin")
 nind<-50
 #first 3 are high DMRs, next 3 are low DMRs, next 3 are no DMRs
@@ -294,6 +296,45 @@ TN_MW.bonfe=nrow(semi_join(MW.bonfe.nonsig,nonDMR,by='wind_id'))
 # get the false negatives
 FN_MW.bonfe=nrow(MW.bonfe.nonsig)-TN_MW.bonfe
 
+#DESeq2 #####
+dds_mat=as.data.frame(t(df_Mat))
+dds=DESeqDataSetFromMatrix(countData = dds_mat,colData = df_design,design = ~ group)
+dds=DESeq(dds)
+res=results(dds)
+deseq.pvalue=res$pvalue
+deseq.pvalue=data.frame(deseq.pvalue)
+colnames(deseq.pvalue)=c("p_value")
+row.names(deseq.pvalue)=row.names(dds_mat)
+deseq.pvalue$corrected_p_value = p.adjust(((deseq.pvalue$p_value)), method = "BH")
+# getting the windows that are marked as significant
+dds.sig=desing_win[desing_win$wind_id%in%row.names(deseq.pvalue)[deseq.pvalue$corrected_p_value<0.01],]
+# getting the windows that are marked as non-significant
+dds.nonsig=desing_win[desing_win$wind_id%in%row.names(deseq.pvalue)[deseq.pvalue$corrected_p_value>=0.01],]
+# get the true positives
+TP_dds=nrow(semi_join(dds.sig,DMR,by='wind_id'))
+# get the false positives
+FP_dds=nrow(dds.sig)-TP_dds
+# get the true negatives
+TN_dds=nrow(semi_join(dds.nonsig,nonDMR,by='wind_id'))
+# get the false negatives
+FN_dds=nrow(dds.nonsig)-TN_dds
+
+#bonferroni
+deseq.pvalue.bonfe=deseq.pvalue
+deseq.pvalue.bonfe$corrected_p_value = p.adjust(((deseq.pvalue.bonfe$p_value)), method = "bonferroni")
+# getting the windows that are marked as significant
+dds.bonfe.sig=desing_win[desing_win$wind_id%in%row.names(deseq.pvalue.bonfe)[deseq.pvalue.bonfe$corrected_p_value<0.01],]
+# getting the windows that are marked as non-significant
+dds.bonfe.nonsig=desing_win[desing_win$wind_id%in%row.names(deseq.pvalue.bonfe)[deseq.pvalue.bonfe$corrected_p_value>=0.01],]
+# get the true positives
+TP_dds.bonfe=nrow(semi_join(dds.bonfe.sig,DMR,by='wind_id'))
+# get the false positives
+FP_dds.bonfe=nrow(dds.bonfe.sig)-TP_dds.bonfe
+# get the true negatives
+TN_dds.bonfe=nrow(semi_join(dds.bonfe.nonsig,nonDMR,by='wind_id'))
+# get the false negatives
+FN_dds.bonfe=nrow(dds.bonfe.nonsig)-TN_dds.bonfe
+
 # ##### PCA+BCA approach #####
 # # for the sake of consistency i am going to normalize the counts with the TMM normalization factor + CPM
 # edgeR.BCA <- DGEList(counts=t(df_Mat), genes=colnames(df_Mat))
@@ -353,8 +394,10 @@ acc.ttest=(TP_ttest+TN_ttest)/(TP_ttest+TN_ttest+FN_ttest+FP_ttest)
 acc.ttest.bonfe=(TP_ttest.bonfe+TN_ttest.bonfe)/(TP_ttest.bonfe+TN_ttest.bonfe+FN_ttest.bonfe+FP_ttest.bonfe)
 acc.MW=(TP_MW+TN_MW)/(TP_MW+TN_MW+FN_MW+FP_MW)
 acc.MW.bonfe=(TP_MW.bonfe+TN_MW.bonfe)/(TP_MW.bonfe+TN_MW.bonfe+FN_MW.bonfe+FP_MW.bonfe)
+acc.dds=(TP_dds+TN_dds)/(TP_dds+TN_dds+FN_dds+FP_dds)
+acc.dds.bonfe=(TP_dds.bonfe+TN_dds.bonfe)/(TP_dds.bonfe+TN_dds.bonfe+FN_dds.bonfe+FP_dds.bonfe)
 #acc.PCA=(TP_PCA+TN_PCA)/(TP_PCA+FP_PCA+TN_PCA+FN_PCA)
-acc.total=data.frame("maximum-likelihood"=acc.ML,"quasi-likelihood"=acc.QL,"maximum-likelihood+observational.weigths"=acc.ML.rob,"quasi-likelihood+observational.weigths"=acc.QL.rob,"moderated t-test"=acc.ttest,"Mann-whitney"=acc.MW,"maximum-likelihood bonferroni"=acc.ML.bonfe,"quasi-likelihood bonferroni"=acc.QL.bonfe,"maximum-likelihood+observational.weigths bonferroni"=acc.ML.rob.bonfe,"moderated t-test bonferroni"=acc.ttest.bonfe,"Mann-whitney bonferroni"=acc.MW.bonfe)
+acc.total=data.frame("DESeq2"=acc.dds,"DESeq2 bonferroini"=acc.dds.bonfe,"maximum-likelihood"=acc.ML,"quasi-likelihood"=acc.QL,"maximum-likelihood+observational.weigths"=acc.ML.rob,"quasi-likelihood+observational.weigths"=acc.QL.rob,"moderated t-test"=acc.ttest,"Mann-whitney"=acc.MW,"maximum-likelihood bonferroni"=acc.ML.bonfe,"quasi-likelihood bonferroni"=acc.QL.bonfe,"maximum-likelihood+observational.weigths bonferroni"=acc.ML.rob.bonfe,"moderated t-test bonferroni"=acc.ttest.bonfe,"Mann-whitney bonferroni"=acc.MW.bonfe)
 write.table(acc.total,file = "/proj/naiss2024-23-57/GBS_MeDIP_benchmark/benchmark_final_tables/accuracy_simulation.txt",quote = F,sep = "\t",row.names = F)
 
 ##### Getting precision #####
@@ -368,8 +411,10 @@ pre.ttest=TP_ttest/(TP_ttest+FP_ttest)
 pre.ttest.bonfe=TP_ttest.bonfe/(TP_ttest.bonfe+FP_ttest.bonfe)
 pre.MW=TP_MW/(FP_MW+TP_MW)
 pre.MW.bonfe=TP_MW.bonfe/(FP_MW.bonfe+TP_MW.bonfe)
+pre.dds=TP_dds/(FP_dds+TP_dds)
+pre.dds.bonfe=TP_dds.bonfe/(FP_dds.bonfe+TP_dds.bonfe)
 # pre.PCA=TP_PCA/(FP_PCA+TP_PCA)
-pre.total=data.frame("maximum-likelihood"=pre.ML,"quasi-likelihood"=pre.QL,"maximum-likelihood+observational.weigths"=pre.ML.rob,"quasi-likelihood+observational.weigths"=pre.QL.rob,"moderated t-test"=pre.ttest,"Mann-whitney"=pre.MW,"maximum-likelihood bonferroni"=pre.ML.bonfe,"quasi-likelihood bonferroni"=pre.QL.bonfe,"moderated t-test bonferroni"=pre.ttest.bonfe,"Mann-whitney bonferroni"=pre.MW.bonfe)
+pre.total=data.frame("DESeq2"=pre.dds,"DESeq2 bonferroini"=pre.dds.bonfe,"maximum-likelihood"=pre.ML,"quasi-likelihood"=pre.QL,"maximum-likelihood+observational.weigths"=pre.ML.rob,"quasi-likelihood+observational.weigths"=pre.QL.rob,"moderated t-test"=pre.ttest,"Mann-whitney"=pre.MW,"maximum-likelihood bonferroni"=pre.ML.bonfe,"quasi-likelihood bonferroni"=pre.QL.bonfe,"moderated t-test bonferroni"=pre.ttest.bonfe,"Mann-whitney bonferroni"=pre.MW.bonfe)
 write.table(pre.total,file = "/proj/naiss2024-23-57/GBS_MeDIP_benchmark/benchmark_final_tables/precision_simulation.txt",quote = F,sep = "\t",row.names = F)
 
 ##### Getting recall #####
@@ -383,8 +428,10 @@ rec.ttest=TP_ttest/(TP_ttest+FN_ttest)
 rec.ttest.bonfe=TP_ttest.bonfe/(TP_ttest.bonfe+FN_ttest.bonfe)
 rec.MW=TP_MW/(TP_MW+FN_MW)
 rec.MW.bonfe=TP_MW.bonfe/(TP_MW.bonfe+FN_MW.bonfe)
+rec.dds=TP_dds/(TP_dds+FN_dds)
+rec.dds.bonfe=TP_dds.bonfe/(TP_dds.bonfe+FN_dds.bonfe)
 # rec.PCA=TP_PCA/(TP_PCA+FN_PCA)
-rec.total=data.frame("maximum-likelihood"=rec.ML,"quasi-likelihood"=rec.QL,"maximum-likelihood+observational.weigths"=rec.ML.rob,"quasi-likelihood+observational.weigths"=rec.QL.rob,"moderated t-test"=rec.ttest,"Mann-whitney"=rec.MW,"maximum-likelihood bonferroni"=rec.ML.bonfe,"quasi-likelihood bonferroni"=rec.QL.bonfe,"moderated t-test bonferroni"=rec.ttest.bonfe,"Mann-whitney bonferroni"=rec.MW.bonfe)
+rec.total=data.frame("DESeq2"=rec.dds,"DESeq2 bonferroini"=rec.dds.bonfe,"maximum-likelihood"=rec.ML,"quasi-likelihood"=rec.QL,"maximum-likelihood+observational.weigths"=rec.ML.rob,"quasi-likelihood+observational.weigths"=rec.QL.rob,"moderated t-test"=rec.ttest,"Mann-whitney"=rec.MW,"maximum-likelihood bonferroni"=rec.ML.bonfe,"quasi-likelihood bonferroni"=rec.QL.bonfe,"moderated t-test bonferroni"=rec.ttest.bonfe,"Mann-whitney bonferroni"=rec.MW.bonfe)
 
 write.table(rec.total,file = "/proj/naiss2024-23-57/GBS_MeDIP_benchmark/benchmark_final_tables/recall_simulation.txt",quote = F,sep = "\t",row.names = F)
 
@@ -443,6 +490,16 @@ final.ttest.bonfe=left_join(desing_win,top.p.values.ttest.bonfe.limma,by='wind_i
 roc.ttest.bonfe=roc(final.ttest.bonfe$binary,final.ttest.bonfe$corrected_p_value,direction=">")
 auc.ttest.bonfe=auc(final.ttest.bonfe$binary,final.ttest.bonfe$corrected_p_value,direction=">")
 
+deseq.pvalue$wind_id=row.names(deseq.pvalue)
+final.dds=left_join(desing_win,deseq.pvalue,by='wind_id')
+roc.dds=roc(final.dds$binary,final.dds$corrected_p_value,direction=">")
+auc.dds=auc(final.dds$binary,final.dds$corrected_p_value,direction=">")
+
+deseq.pvalue.bonfe$wind_id=row.names(deseq.pvalue.bonfe)
+final.dds.bonfe=left_join(desing_win,deseq.pvalue.bonfe,by='wind_id')
+roc.dds.bonfe=roc(final.dds.bonfe$binary,final.dds.bonfe$corrected_p_value,direction=">")
+auc.dds.bonfe=auc(final.dds.bonfe$binary,final.dds.bonfe$corrected_p_value,direction=">")
+
 # final.PCA=left_join(desing_win,contribution_TMM_CPM,by='wind_id')
 # roc.PCA=roc(final.PCA$binary,final.PCA$contribution)
 # auc.PCA=auc(final.PCA$binary,final.PCA$contribution,direction="<")
@@ -479,10 +536,12 @@ plot(roc.mw,add=TRUE,col="#469990",lwd=6)
 plot(roc.ml.bonfe,add=T,col="#a9a9a9",lwd=6)
 plot(roc.mw.bonfe,add=T,col="#fabed4",lwd=6)
 plot(roc.ttest.bonfe,add=T,col="#f032e6",lwd=6)
+plot(roc.dds,add=T,col="#4363d8",lwd=6)
+plot(roc.dds.bonfe,add=T,col="#3cb44b",lwd=6)
 legend(x="right", inset = c(-0.4,-0.4),xpd = T,
        cex=1,bty = 'n',text.width=0.1,ncol=1,xjust=0,lwd=4,
-       y.intersp =0,x.intersp = 0.1,legend = c("EdgeR - ML with FDR","EdgeR - QL with FDR","Limma with FDR","Mann-whitney with FDR","EdgeR - ML with Bonferroni","Mann-whitney with Bonferroni","Limma with Bonferroni"), 
-       col = c("#800000","#f58231", "#808000", "#469990","#a9a9a9","#fabed4","#f032e6"), lty = c(1,1,1,1,1,1,1))
+       y.intersp =0,x.intersp = 0.1,legend = c("EdgeR - ML with FDR","EdgeR - QL with FDR","Limma with FDR","Mann-whitney with FDR","EdgeR - ML with Bonferroni","Mann-whitney with Bonferroni","Limma with Bonferroni","DESeq2 with FDR","DESeq2 with Bonferroni"), 
+       col = c("#800000","#f58231", "#808000", "#469990","#a9a9a9","#fabed4","#f032e6","#4363d8","#3cb44b"), lty = c(1,1,1,1,1,1,1,1,1))
 dev.off()
 tiff(file="/proj/naiss2024-23-57/GBS_MeDIP_benchmark/benchmark_final_tables/legend_roc_plot_simulationnoPCABCA.tiff", width=1200, height=1200, units="px", res=150)
 par(xpd = T,mar=c(5,5,4,10)+0.1)
@@ -491,8 +550,8 @@ plot(1, type = "n", xlab = "",
      ylim = c(0, 0))
 legend(x="center", inset = c(0.5,0.5),xpd = T,
        cex=1,bty = 'n',text.width=0.5,ncol=1,xjust=0,lwd=4,
-       y.intersp =3,x.intersp = 1,legend = c("EdgeR - ML with FDR","EdgeR - QL with FDR","Limma with FDR","Mann-whitney with FDR","EdgeR - ML with Bonferroni","Mann-whitney with Bonferroni","Limma with Bonferroni"), 
-       col = c("#800000","#f58231", "#808000", "#469990","#a9a9a9","#fabed4","#f032e6"), lty = c(1,1,1,1,1,1,1))
+       y.intersp =3,x.intersp = 1,legend = c("EdgeR - ML with FDR","EdgeR - QL with FDR","Limma with FDR","Mann-whitney with FDR","EdgeR - ML with Bonferroni","Mann-whitney with Bonferroni","Limma with Bonferroni","DESeq2 with FDR","DESeq2 with Bonferroni"), 
+       col = c("#800000","#f58231", "#808000", "#469990","#a9a9a9","#fabed4","#f032e6","#4363d8","#3cb44b"), lty = c(1,1,1,1,1,1,1,1,1))
 dev.off()
 
 # let's plot it in ggplot so we can see the all curves#####
