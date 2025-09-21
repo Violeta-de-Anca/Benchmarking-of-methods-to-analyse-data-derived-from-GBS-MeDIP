@@ -1,5 +1,5 @@
 #!/bin/sh
-#SBATCH -A naiss2023-22-848
+#SBATCH -A uppmax2025-3-6
 #SBATCH -p core
 #SBATCH -n 4
 #SBATCH -t 10-00:00:00
@@ -13,4 +13,4 @@
 module load bioinfo-tools
 module load R_packages/4.2.1
 
-R --no-save --quiet < benchmarking_models_binomial_simulation.R
+R --no-save --quiet < benchmarking_models_negaative_binomial_simulation.R
